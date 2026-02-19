@@ -1,44 +1,46 @@
 const APP_KEY = 'mp_tickets_data';
 const SCHEMA_KEY = 'mp_schema_map';
 const FILTER_KEY = 'mp_date_filter'; 
+const THEME_KEY = 'mp_theme_mode'; // Nueva key para el tema
 
 const Core = {
     loadingStartTime: 0, 
 
-    // --- 1. GESTIÓN DE INTERFAZ Y MÓVIL ---
+    // --- GESTIÓN DE INTERFAZ ---
     initSidebar: () => {
         const container = document.getElementById('appSidebar'); 
         if (!container) return;
 
-        // Inyectar Overlay para móvil
+        // Overlay y Botón Móvil
         if (!document.getElementById('sidebarOverlay')) {
             const overlay = document.createElement('div');
             overlay.id = 'sidebarOverlay';
+            overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40;opacity:0;pointer-events:none;transition:opacity 0.3s;";
             document.body.appendChild(overlay);
-            
-            // Cerrar al hacer clic fuera
             overlay.addEventListener('click', () => {
                 container.classList.remove('mobile-active');
-                overlay.classList.remove('active');
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
             });
         }
 
-        // Inyectar Botón Flotante para móvil
         if (!document.getElementById('mobileMenuTrigger')) {
             const fab = document.createElement('button');
             fab.id = 'mobileMenuTrigger';
-            fab.innerHTML = '☰'; // Icono Hamburguesa
-            fab.title = "Abrir Menú";
+            fab.innerHTML = '☰';
             document.body.appendChild(fab);
-            
             fab.addEventListener('click', () => {
                 container.classList.add('mobile-active');
-                document.getElementById('sidebarOverlay').classList.add('active');
+                const ov = document.getElementById('sidebarOverlay');
+                ov.style.opacity = '1';
+                ov.style.pointerEvents = 'auto';
             });
         }
 
-        const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+        const path = window.location.pathname;
+        const currentFile = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
         const filter = Core.getDateFilter();
+        const isDark = Core.getTheme() === 'dark'; // Verificar tema
 
         const menuItems = [
             { file: 'index.html', icon: '🏠', text: 'Inicio' },
@@ -57,73 +59,65 @@ const Core = {
                     </a>`;
         }).join('');
 
-        // Filtro compacto
+        // HTML del Footer con Switch de Modo Oscuro
         const bottomSectionHtml = `
-            <div style="background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
-                <div style="padding: 0.75rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.25rem;">
-                        <span style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; font-weight: bold;">📅 Periodo</span>
-                        <span id="activeFilterLabel" style="font-size: 0.65rem; color: var(--mp-red); ${filter.mode === 'all' ? 'display:none' : ''}">● Filtro</span>
-                    </div>
-                    
-                    <select id="globalDatePreset" style="width: 100%; background: #1e293b; color: white; border: 1px solid #334155; padding: 4px; border-radius: 4px; font-size: 0.8rem;">
-                        <option value="all" ${filter.mode === 'all' ? 'selected' : ''}>Todo el histórico</option>
-                        <option value="this_year" ${filter.mode === 'this_year' ? 'selected' : ''}>Este Año</option>
-                        <option value="last_30" ${filter.mode === 'last_30' ? 'selected' : ''}>Últimos 30 días</option>
-                        <option value="custom" ${filter.mode === 'custom' ? 'selected' : ''}>Personalizado...</option>
-                    </select>
-                    
-                    <div id="customDateInputs" class="${filter.mode !== 'custom' ? 'hidden' : ''}" style="margin-top: 6px;">
-                        <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                            <input type="date" id="globalDateStart" value="${filter.start}" style="width: 50%; background: #1e293b; color: white; border: 1px solid #334155; padding: 2px; border-radius: 3px; font-size: 0.7rem;">
-                            <input type="date" id="globalDateEnd" value="${filter.end}" style="width: 50%; background: #1e293b; color: white; border: 1px solid #334155; padding: 2px; border-radius: 3px; font-size: 0.7rem;">
-                        </div>
-                        <button id="btnApplyFilter" style="width:100%; background: var(--mp-red); color: white; border: none; padding: 4px; border-radius: 3px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Aplicar</button>
-                    </div>
+            <div class="sidebar-bottom">
+                <div class="sidebar-filter-label">
+                    <span>📅 Periodo</span>
+                    <span id="activeFilterLabel" class="text-red" style="${filter.mode === 'all' ? 'display:none' : ''}">● Activo</span>
                 </div>
-                <div class="sidebar-footer" style="padding: 0.5rem; text-align: center; font-size: 0.65rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05);">
-                    MP Intelligence v2.3
+                
+                <select id="globalDatePreset" class="sidebar-select">
+                    <option value="all" ${filter.mode === 'all' ? 'selected' : ''}>Todo el histórico</option>
+                    <option value="this_year" ${filter.mode === 'this_year' ? 'selected' : ''}>Este Año</option>
+                    <option value="last_30" ${filter.mode === 'last_30' ? 'selected' : ''}>Últimos 30 días</option>
+                    <option value="custom" ${filter.mode === 'custom' ? 'selected' : ''}>Personalizado...</option>
+                </select>
+                
+                <div id="customDateInputs" class="${filter.mode !== 'custom' ? 'hidden' : ''}">
+                    <div class="sidebar-date-row">
+                        <input type="date" id="globalDateStart" value="${filter.start}" class="sidebar-date-input">
+                        <input type="date" id="globalDateEnd" value="${filter.end}" class="sidebar-date-input">
+                    </div>
+                    <button id="btnApplyFilter" class="sidebar-btn-apply">Aplicar Filtro</button>
                 </div>
+
+                <!-- SWITCH MODO OSCURO -->
+                <div class="theme-switch-wrapper">
+                    <span class="theme-label">☀️</span>
+                    <label class="theme-switch" for="checkboxTheme">
+                        <input type="checkbox" id="checkboxTheme" ${isDark ? 'checked' : ''}>
+                        <div class="slider"></div>
+                    </label>
+                    <span class="theme-label">🌙</span>
+                </div>
+
+                <div class="sidebar-footer-text">MP Intelligence v2.4</div>
             </div>
         `;
 
         container.innerHTML = `
-            <div class="sidebar-header" style="padding: 1rem 1.5rem; height: 70px;">
+            <div class="sidebar-header">
                 <div class="logo-container">
-                    <img src="assets/logo.png" alt="MP" class="logo-img logo-invert" style="height: 28px;">
-                    
+                    <img src="assets/logo.png" alt="MP" class="logo-img">
                 </div>
-                <button id="sidebarToggle" title="Colapsar menú" style="display: flex;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <button id="sidebarToggle" title="Colapsar menú">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
             </div>
-            
-            <nav class="nav-menu" style="flex: 1; overflow-y: auto;">
-                ${navHtml}
-            </nav>
-            
+            <nav class="nav-menu">${navHtml}</nav>
             ${bottomSectionHtml}
         `;
 
-        // Eventos Toggle (Desktop) y Cierre (Móvil)
+        // Eventos
         const toggleBtn = document.getElementById('sidebarToggle');
-        if(toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                // En móvil, este botón (dentro del menú) sirve para cerrar el menú
-                if (window.innerWidth <= 768) {
-                    container.classList.remove('mobile-active');
-                    document.getElementById('sidebarOverlay').classList.remove('active');
-                } else {
-                    container.classList.toggle('collapsed');
-                }
-            });
-        }
+        if(toggleBtn) toggleBtn.addEventListener('click', () => container.classList.toggle('collapsed'));
 
-        // Filtros
         const presetSelect = document.getElementById('globalDatePreset');
         const customInputs = document.getElementById('customDateInputs');
         const activeLabel = document.getElementById('activeFilterLabel');
         const btnApply = document.getElementById('btnApplyFilter');
+        const themeSwitch = document.getElementById('checkboxTheme');
 
         if(presetSelect) {
             presetSelect.addEventListener('change', (e) => {
@@ -147,9 +141,33 @@ const Core = {
                 window.location.reload();
             });
         }
+
+        if(themeSwitch) {
+            themeSwitch.addEventListener('change', Core.toggleTheme);
+        }
     },
 
-    // --- 2. FILTRADO FECHAS ---
+    // --- TEMA OSCURO ---
+    getTheme: () => localStorage.getItem(THEME_KEY) || 'light',
+    
+    toggleTheme: (e) => {
+        if (e.target.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem(THEME_KEY, 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem(THEME_KEY, 'light');
+        }
+    },
+
+    applyStoredTheme: () => {
+        const currentTheme = localStorage.getItem(THEME_KEY);
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    },
+
+    // --- FILTRADO FECHAS ---
     getDateFilter: () => {
         try { return JSON.parse(sessionStorage.getItem(FILTER_KEY)) || { mode: 'all', start: '', end: '' }; } 
         catch { return { mode: 'all', start: '', end: '' }; }
@@ -202,7 +220,7 @@ const Core = {
         return null;
     },
 
-    // --- 3. EXPORTACIÓN ---
+    // --- EXPORTACIÓN ---
     downloadCSV: (data, filename) => {
         if (!data || !data.length) { alert("No hay datos."); return; }
         const csv = Papa.unparse(data);
@@ -240,7 +258,7 @@ const Core = {
         } catch (e) { alert("Error generando Excel."); }
     },
 
-    // --- 4. SISTEMA ---
+    // --- SISTEMA ---
     togglePreloader: (show, text = "Cargando...") => {
         const el = document.getElementById('preloader');
         const txtEl = document.getElementById('preloaderText');
@@ -293,4 +311,8 @@ const Core = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => { Core.initSidebar(); });
+// Aplicar tema al cargar
+document.addEventListener('DOMContentLoaded', () => { 
+    Core.applyStoredTheme(); 
+    Core.initSidebar(); 
+});

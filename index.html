@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP Intelligence Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/faviconmp-32x32.png">
+    <link rel="stylesheet" href="css/mp_style.css">
+    <!-- Añadido PapaParse para detección de esquema al cargar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        /* Estilos específicos para los botones compactos del dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .dash-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.2rem 0.5rem;
+            text-decoration: none;
+            color: var(--mp-dark);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dash-btn:hover {
+            border-color: var(--mp-red);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        .dash-btn.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            filter: grayscale(1);
+            background-color: #f1f5f9;
+        }
+
+        .dash-icon {
+            width: 40px;
+            height: 40px;
+            background: #fef2f2;
+            color: var(--mp-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        .dash-btn:hover .dash-icon {
+            transform: scale(1.1);
+            background: var(--mp-red);
+            color: white;
+        }
+
+        .dash-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="preloader">
+        <div class="spinner"></div>
+        <p id="preloaderText" style="color:#94a3b8; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Iniciando...</p>
+    </div>
+
+    <section id="landingPage" class="landing-container">
+        <div class="landing-content">
+            <div class="landing-text">
+                <div class="brand-badge">
+                    <img src="assets/faviconmp-32x32.png" alt="Icon" width="20">
+                    <span>MP Intelligence v2.1</span>
+                </div>
+                <h1 class="landing-title">Análisis de Datos<br><span class="text-red">Empresariales</span></h1>
+                <p class="landing-desc">
+                    Optimiza la toma de decisiones con nuestra plataforma de auditoría inteligente. Importa tus tickets y visualiza el rendimiento al instante.
+                </p>
+                <div class="landing-actions">
+                    <label for="landingFileInput" class="btn-primary">Subir Informe CSV</label>
+                    <input type="file" id="landingFileInput" accept=".csv" class="hidden">
+                    <button id="enterDashboardBtn" class="btn-ghost">Ir al Dashboard &rarr;</button>
+                </div>
+            </div>
+            
+            <div class="landing-visual">
+                <div class="glow-bg"></div>
+                <div class="building-structure">
+                    <div class="elevator-brand">MP Ascensores</div>
+                    <div class="elevator-header">
+                        <div class="floor-display">
+                            <span class="floor-number"></span> 
+                            <div class="direction-arrows">
+                                <span class="arrow arrow-up">▲</span>
+                                <span class="arrow arrow-down">▼</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="elevator-shaft">
+                        <div class="rail rail-left"></div>
+                        <div class="rail rail-right"></div>
+                        <div class="cable cable-1"></div>
+                        <div class="cable cable-2"></div>
+                        <div class="elevator-cabin">
+                            <div class="elevator-window">
+                                <div class="people-shape"></div>
+                            </div>
+                            <div class="door-panel left"></div>
+                            <div class="door-panel right"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="floating-card">
+                    <div class="card-line"></div>
+                    <div class="card-line short"></div>
+                    <div class="card-chart">
+                        <div class="chart-bar b1"></div>
+                        <div class="chart-bar b2"></div>
+                        <div class="chart-bar b3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="appContainer" class="app-container hidden">
+        <!-- SIDEBAR VACÍA (Se llena con core.js) -->
+        <aside class="sidebar" id="appSidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Centro de Control</h1>
+                    <p class="page-subtitle">Gestión e importación de datos técnicos.</p>
+                </div>
+                <div id="connectionStatus" class="text-green text-bold text-sm">● Sistema Activo</div>
+            </div>
+
+            <div id="uploadArea" class="upload-area">
+                <div class="mb-4">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <h3 class="mb-2 text-bold">Importar Tickets CSV</h3>
+                <p class="text-muted text-sm mb-4">Arrastra tu archivo aquí o haz clic para buscar.</p>
+                <label for="fileInput" class="btn-upload">Seleccionar Archivo</label>
+                <input type="file" id="fileInput" accept=".csv" class="hidden">
+            </div>
+
+            <h3 class="text-bold text-muted uppercase text-xs mb-2 mt-4">Accesos Directos</h3>
+            <div class="dashboard-grid">
+                <!-- 1. SOLICITANTES -->
+                <a href="solicitantes.html" class="dash-btn card-link">
+                    <div class="dash-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <span class="dash-title">Solicitantes</span>
+                </a>
+
+                <!-- 2. GLOBALES -->
+                <a href="organizaciones.html" class="dash-btn card-link">
+                    <div class="dash-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <span class="dash-title">Globales</span>
+                </a>
+
+                <!-- 3. DESGLOSE -->
+                <a href="org_desglose.html" class="dash-btn card-link">
+                    <div class="dash-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </div>
+                    <span class="dash-title">Desglose</span>
+                </a>
+
+                <!-- 4. ESTADÍSTICAS (NUEVO) -->
+                <a href="estadisticas.html" class="dash-btn card-link">
+                    <div class="dash-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                    </div>
+                    <span class="dash-title">Estadísticas</span>
+                </a>
+
+                <!-- 5. AUDITORÍA -->
+                <a href="tickets_detalle.html" class="dash-btn card-link">
+                    <div class="dash-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="dash-title">Auditoría</span>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

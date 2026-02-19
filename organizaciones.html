@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globales - MP Intelligence</title>
+    <link rel="icon" type="image/png" href="assets/faviconmp-32x32.png">
+    <link rel="stylesheet" href="css/mp_style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        /* Estilos panel configuración (Reutilizados) */
+        .config-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .config-panel { background: #f8fafc; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
+        .selection-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 0.5rem; max-height: 250px; overflow-y: auto; background: white;
+            border: 1px solid #e2e8f0; padding: 1rem; border-radius: 4px; margin: 1rem 0;
+        }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; user-select: none; }
+        .checkbox-label:hover { color: var(--mp-red); }
+        .checkbox-label input { accent-color: var(--mp-red); }
+        .control-bar { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+        .counter-badge { background: #e2e8f0; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; }
+        .counter-badge.limit { background: #fee2e2; color: #dc2626; }
+        /* Nuevo estilo para el botón pequeño */
+        .btn-mini { padding: 2px 8px; font-size: 0.75rem; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer; transition: 0.2s; color: var(--mp-red); }
+        .btn-mini:hover { background: #fef2f2; border-color: var(--mp-red); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Análisis Global</h1>
+                    <p class="page-subtitle">Volumen de incidencias por Organización.</p>
+                </div>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="card" style="align-items: flex-start; text-align: left;">
+                    <div class="text-xs uppercase text-muted">Volumen Total</div>
+                    <div class="text-2xl text-bold text-red" id="totalTickets">0</div>
+                </div>
+                <div class="card" style="align-items: flex-start; text-align: left;">
+                    <div class="text-xs uppercase text-muted">Organizaciones</div>
+                    <div class="text-2xl text-bold" id="totalOrgs">0</div>
+                </div>
+                <div class="card" style="align-items: flex-start; text-align: left;">
+                    <div class="text-xs uppercase text-muted">Media / Org</div>
+                    <div class="text-2xl text-bold" id="avgTickets">0</div>
+                </div>
+            </div>
+
+            <!-- SECCION DE GRÁFICO CON CONFIGURACIÓN -->
+            <div class="card mb-4" style="align-items: stretch; text-align: left;">
+                <div class="config-header" id="btnToggleConfig">
+                    <h3 class="card-title mb-0">📊 Gráfico Comparativo</h3>
+                    <button class="btn-secondary text-sm p-2">⚙️ Personalizar Datos</button>
+                </div>
+
+                <div id="configPanel" class="config-panel hidden">
+                    <div class="control-bar">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="searchSelector" class="search-input" placeholder="Buscar organización...">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-bold">Ordenar por:</span>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="sortOrder" value="value" checked> Valor (Top)</label>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="sortOrder" value="name"> Nombre (A-Z)</label>
+                        </div>
+                        <div class="text-sm flex items-center gap-2">
+                            <span>Seleccionados: <span id="selectionCounter" class="counter-badge">0/25</span></span>
+                            <!-- BOTÓN NUEVO -->
+                            <button id="btnClearSelection" class="btn-mini" title="Deseleccionar todos">Limpiar</button>
+                        </div>
+                    </div>
+
+                    <div class="selection-grid" id="checkboxContainer">
+                        <!-- Checkboxes inyectados por JS -->
+                    </div>
+
+                    <button id="btnUpdateChart" class="btn-upload w-full mt-2">Actualizar Visualización</button>
+                </div>
+
+                <div class="chart-section mt-4" style="border:none; height: 500px;">
+                    <canvas id="orgChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="align-items: stretch; text-align: left;">
+                <h3 class="card-title">Ranking de Organizaciones</h3>
+                <input type="text" id="searchInput" class="search-input mb-4" placeholder="Filtrar empresa...">
+                <div class="table-container table-scroll-y">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Organización</th>
+                                <th class="text-right">Tickets</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script src="js/organizaciones.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría de Tickets - MP Intelligence</title>
+    <link rel="icon" type="image/png" href="assets/faviconmp-32x32.png">
+    <link rel="stylesheet" href="css/mp_style.css">
+    
+    <!-- Librería externa para CSV (PapaParse) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <style>
+        /* Estilos específicos para el colapso */
+        .split-view { transition: all 0.3s ease; }
+        .list-pane.hidden-pane { display: none; }
+        .detail-pane { transition: width 0.3s ease; }
+        
+        /* Botón pequeño para colapsar */
+        .btn-icon-small {
+            background: #e2e8f0; border: none; border-radius: 4px;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #64748b; transition: 0.2s;
+        }
+        .btn-icon-small:hover { background: #cbd5e1; color: #1e293b; }
+        
+        /* Botón para re-mostrar */
+        .btn-expand {
+            background: #f1f5f9; color: var(--mp-dark); border: 1px solid #e2e8f0;
+            padding: 0.4rem 1rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            margin-bottom: 1rem;
+        }
+        .btn-expand:hover { background: #e2e8f0; }
+        
+        /* Ajuste de fecha en tabla para que no salte de linea */
+        td.date-cell { white-space: nowrap; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Auditoría de Resolución</h1>
+                    <p class="page-subtitle">Análisis detallado de tiempos por organización.</p>
+                </div>
+            </div>
+
+            <div class="split-view">
+                <!-- PANEL IZQUIERDO: LISTA -->
+                <div class="list-pane" id="listPane">
+                    <div class="search-box" style="display: flex; gap: 8px;">
+                        <input type="text" id="orgSearch" placeholder="Buscar instalación..." class="search-input" style="flex:1;">
+                        <button id="btnCollapseList" class="btn-icon-small" title="Ocultar lista para ganar espacio">◀</button>
+                    </div>
+                    <div id="orgList" class="h-full table-scroll-y"></div>
+                </div>
+
+                <!-- PANEL DERECHO: DETALLE -->
+                <div class="detail-pane" id="detailContainer">
+                    <!-- Botón para mostrar lista (oculto por defecto) -->
+                    <button id="btnExpandList" class="btn-expand hidden">
+                        <span>☰ Mostrar Lista</span>
+                    </button>
+
+                    <div id="selectPrompt" class="flex-center-col h-full text-muted">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <p class="mt-4">Seleccione una organización de la lista.</p>
+                    </div>
+
+                    <div id="detailView" class="hidden h-full flex flex-col">
+                        <h2 id="detailTitle" class="text-xl text-bold mb-4">Organización</h2>
+                        
+                        <div class="kpi-row">
+                            <div class="kpi-item">
+                                <label>Total Tickets</label>
+                                <span id="detailTotal">0</span>
+                            </div>
+                            <div class="kpi-item">
+                                <label>Tiempo Total (min)</label>
+                                <span id="detailTimeTotal" class="text-red">0</span>
+                            </div>
+                            <div class="kpi-item">
+                                <label>Promedio (min)</label>
+                                <span id="detailAvg">0</span>
+                            </div>
+                        </div>
+
+                        <div class="table-container table-scroll-y" style="flex:1;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Solicitante</th>
+                                        <th>Agente</th>
+                                        <th>Creado</th>   <!-- Nueva Columna -->
+                                        <th>Resuelto</th> <!-- Nueva Columna -->
+                                        <th class="text-right">Tiempo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script src="js/tickets_detalle.js"></script>
+</body>
+</html>
